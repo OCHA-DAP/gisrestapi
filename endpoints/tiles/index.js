@@ -254,6 +254,40 @@ exports.app = function (passport) {
   //Load PG Tables
   //look thru all tables in PostGres with a geometry column, spin up dynamic map tile services for each one
   //common.vacuumAnalyzeAll();
+  
+  exports.createTileRoutesForItem = function (item) {
+
+      var tileSettings = { mapnik_datasource: {}, tileSize: { height: 256, width: 256}, routeProperties: { name: "", source: "", geom_field: "", srid: "", cartoFile: "" }};
+
+      tileSettings.mapnik_datasource = {
+        'host': settings.pg.server,
+        'port': settings.pg.port,
+        'dbname': settings.pg.database,
+        //'table': item.table,
+        'table': ('(SELECT ' + item.geometry_column + ' from "' + item.table + '"' + ') as "' + item.table + '"'),
+
+        'user': settings.pg.username,
+        'password': settings.pg.password,
+        'type': 'postgis',
+        'estimate_extent': 'false',
+        'geometry_field': item.geometry_column,
+        'srid': item.srid,
+        'geometry_type': item.type
+      };
+      tileSettings.routeProperties.name = key;
+      tileSettings.routeProperties.table = item.table;
+      tileSettings.routeProperties.srid = item.srid;
+      tileSettings.routeProperties.cartoFile = "";
+      tileSettings.routeProperties.source = "postgis";
+      tileSettings.routeProperties.geom_field = item.geometry_column;
+      tileSettings.routeProperties.defaultStyle = "";//The name of the style inside of the xml file
+
+      
+      debugger;
+      createMultiTileRoute(app, tileSettings, PGTileStats.MultiTiles);
+      createSingleTileRoute(app, tileSettings, PGTileStats.SingleTiles);
+      createVectorTileRoute(app, tileSettings, PGTileStats.VectorTiles);
+    };
 
   common.findSpatialTables(app, function (error, tables) {
     if (error) {
@@ -263,38 +297,7 @@ exports.app = function (passport) {
         Object.keys(tables).forEach(function (key) {
           var item = tables[key];
 
-          (function (item) {
-
-            var tileSettings = { mapnik_datasource: {}, tileSize: { height: 256, width: 256}, routeProperties: { name: "", source: "", geom_field: "", srid: "", cartoFile: "" }};
-
-            tileSettings.mapnik_datasource = {
-              'host': settings.pg.server,
-              'port': settings.pg.port,
-              'dbname': settings.pg.database,
-              //'table': item.table,
-              'table': ('(SELECT ' + item.geometry_column + ' from "' + item.table + '"' + ') as "' + item.table + '"'),
-
-              'user': settings.pg.username,
-              'password': settings.pg.password,
-              'type': 'postgis',
-              'estimate_extent': 'false',
-              'geometry_field': item.geometry_column,
-              'srid': item.srid,
-              'geometry_type': item.type
-            };
-            tileSettings.routeProperties.name = key;
-            tileSettings.routeProperties.table = item.table;
-            tileSettings.routeProperties.srid = item.srid;
-            tileSettings.routeProperties.cartoFile = "";
-            tileSettings.routeProperties.source = "postgis";
-            tileSettings.routeProperties.geom_field = item.geometry_column;
-            tileSettings.routeProperties.defaultStyle = "";//The name of the style inside of the xml file
-
-            createMultiTileRoute(app, tileSettings, PGTileStats.MultiTiles);
-            createSingleTileRoute(app, tileSettings, PGTileStats.SingleTiles);
-            createVectorTileRoute(app, tileSettings, PGTileStats.VectorTiles);
-
-          })(item);
+          exports.createTileRoutesForItem(item);
         });
       }
     }
@@ -1284,7 +1287,7 @@ var createMultiTileRoute = exports.createMultiTileRoute = flow.define(
 
 
     });
-
+    debugger;
     console.log("Created multi tile service (" + _self.settings.routeProperties.source + "): " + route);
     tileRoutes.push({ name: _self.settings.routeProperties.name, route: route, type: "Multi Tile", source: _self.settings.routeProperties.source});
   }
@@ -1449,6 +1452,7 @@ var createVectorTileRoute = exports.createVectorTileRoute = flow.define(
   },
   function () {
 
+	console.log("!!! In createVectorTileRoute ");  
     var _self = this;
 
     var route = '/services/' + _self.settings.routeProperties.source + '/' + _self.settings.routeProperties.table + (_self.settings.mapnik_datasource.type.toLowerCase() == 'postgis' ? '/' + _self.settings.mapnik_datasource.geometry_field : '') + '/vector-tiles/:z/:x/:y.*';
@@ -1467,10 +1471,12 @@ var createVectorTileRoute = exports.createVectorTileRoute = flow.define(
 
         //If a where clause was passed in, and we're using a postgis datasource, allow it
         if (_self.settings.mapnik_datasource.type.toLowerCase() == 'postgis') {
+        	console.log("!!! PG simplify 2 " );
           _self.settings.mapnik_datasource.table = (args.fields ? '(SELECT ' + _self.settings.routeProperties.geom_field + (args.fields ? ',' + args.fields : '') + ' from "' + _self.settings.routeProperties.table + '"' + (args.where ? ' WHERE ' + args.where : '') + ') as "' + _self.settings.routeProperties.table + '"' : '"' + _self.settings.routeProperties.table + '"');
         }
       }
 
+      debugger;
       //Make the mapnik datasource.  We wait until now in case the table definition changes if a where clause is passed in above.
       _self.mapnikDatasource = (_self.settings.mapnik_datasource.describe ? _self.settings.mapnik_datasource : new mapnik.Datasource(_self.settings.mapnik_datasource));
 
@@ -1482,11 +1488,13 @@ var createVectorTileRoute = exports.createVectorTileRoute = flow.define(
         var layer = new mapnik.Layer(_self.settings.routeProperties.name, ((_self.epsg && (_self.epsg == 3857 || _self.epsg == 3587)) ? mercator.proj4 : geographic.proj4));
 
         var label_point_layer;
+        console.log("!!! BEFORE SELECT " );
         if(args.labelpoints && _self.settings.mapnik_datasource.type.toLowerCase() == 'postgis') {
           //If user specifies label points to be created, then create another layer in this vector tile that stores the centroid to use as a label point.
 
           //The only difference in the datasource is the table parameter, which is either a table name, or a sub query that allows you specify a WHERE clause.
-          _self.settings.mapnik_datasource.table = (args.fields ? '(SELECT ' + ('ST_PointOnSurface(' + _self.settings.routeProperties.geom_field + ') as geom' ) + (args.fields ? ',' + args.fields : '')  + ' from "' + _self.settings.routeProperties.table + '"' + (args.where ? ' WHERE ' + args.where : '') + ') as "' + _self.settings.routeProperties.table + "_label" + '"' : '"' + _self.settings.routeProperties.table + '"');
+        	console.log("!!! PG simplify " );
+          _self.settings.mapnik_datasource.table = (args.fields ? '(SELECT ' + ('ST_PointOnSurface(ST_SimplifyPreserveTopology(' + _self.settings.routeProperties.geom_field + '), 5) as geom' ) + (args.fields ? ',' + args.fields : '')  + ' from "' + _self.settings.routeProperties.table + '"' + (args.where ? ' WHERE ' + args.where : '') + ') as "' + _self.settings.routeProperties.table + "_label" + '"' : '"' + _self.settings.routeProperties.table + '"');
 
           //Make a new Mapnik datasource object
           _self.mapnikDatasource_label = (_self.settings.mapnik_datasource.describe ? _self.settings.mapnik_datasource : new mapnik.Datasource(_self.settings.mapnik_datasource));
@@ -1521,9 +1529,11 @@ var createVectorTileRoute = exports.createVectorTileRoute = flow.define(
         // use tolerance of 32 for zoom levels below max
         opts.tolerance = req.param('z') < _self._maxzoom ? 32 : 0;
         // make larger than zero to enable
-        opts.simplify = 0;
+        opts.simplify = 1;
+        opts.simplify_distance = 500.0;
+        console.log("!!! SIMPLIFYING ");
         // 'radial-distance', 'visvalingam-whyatt', 'zhao-saalfeld' (default)
-        opts.simplify_algorithm = 'radial-distance';
+        opts.simplify_algorithm = 'zhao-saalfeld';
 
         res.setHeader('Content-Type', 'application/x-protobuf');
 

@@ -161,6 +161,8 @@ exports.app = function (passport) {
           values: [this.args.table]
         };
 
+        console.log("!!! Running query for columns");
+        
         common.executePgQuery(query, function (err, result) {
           //check for error
           if (err) {
@@ -235,9 +237,10 @@ exports.app = function (passport) {
 
       //If there's a geom or raster column, then check for SRID
       this.spatialTables = app.get('spatialTables');
-
       if (rasterOrGeometry.present === true) {
+    	this.geometryColName = rasterOrGeometry.name.substring(1,rasterOrGeometry.name.length-1);
         if (this.spatialTables[this.args.table] && this.spatialTables[this.args.table].srid) {
+        	console.log("!!! SRID in cache for table " + this.args.table);
           this({
             rows: [
               {
@@ -246,6 +249,7 @@ exports.app = function (passport) {
             ]
           });
         } else {
+        	console.log("!!! fetching SRID for table " + this.args.table);
           //check SRID
           var query = {
             text: 'select ST_SRID(' + rasterOrGeometry.name + ') as SRID FROM "' + this.args.table + '" LIMIT 1;',
@@ -270,6 +274,7 @@ exports.app = function (passport) {
         //Report error and exit.
         this.args.errorMessage = err.text;
       } else if (result && result.rows && result.rows.length > 0) {
+    	  console.log("!!! Successfully fetched for table " + this.args.table);
         //Get SRID
         if (result.rows[0].srid == 0 || result.rows[0].srid == "0") {
           this.args.infoMessage = "Warning:  this table's SRID is 0.  Projections and other operations will not function propertly until you <a href='http://postgis.net/docs/UpdateGeometrySRID.html' target='_blank'>set the SRID</a>.";
@@ -279,13 +284,34 @@ exports.app = function (passport) {
         }
         else {
           this.args.SRID = result.rows[0].srid;
+          console.log("!!! SRID for table " + this.args.table + " is " + this.args.SRID);
           //Use the SRID
           if (this.spatialTables[this.args.table]) {
+        	console.log("!!! Table exists. Adding SRID in cache for table " + this.args.table);
             this.spatialTables[this.args.table].srid = result.rows[0].srid;
           } else {
             //Add the table name and the SRID
+        	  debugger;
+        	  console.log("!!! Table DOESN'T exist. Adding SRID in cache for table " + this.args.table + "-" + this.geometryColName);  
             this.spatialTables[this.args.table] = {};
             this.spatialTables[this.args.table].srid = result.rows[0].srid;
+            
+            var spatialTablesKey = this.args.table + "_" + this.geometryColName;
+            var findSpatialCallback = function (err, spatialTables) {
+            	debugger;
+            	if ( spatialTables && spatialTables.hasOwnProperty(spatialTablesKey)) {
+            			tiles.createTileRoutesForItem(spatialTables[spatialTablesKey]);
+            	}
+            };
+            
+            common.findSpatialTables(app, findSpatialCallback, this.args.table, this.geometryColName);
+            
+//            tiles.createTileRoutesForItem({
+//            	'table': this.args.table,
+//            	'srid': result.rows[0].srid,
+//            	'geometry_column': 'wkb_geometry',
+//            	'type': 'MULTIPOLYGON'
+//            });
           }
         }
       } else {
@@ -1126,7 +1152,11 @@ exports.app = function (passport) {
       this.spatialTables = app.get('spatialTables');
 
       //This should have a value
-      var srid = this.spatialTables[this.args.table + "_" + this.args.geomcolumn].srid;
+      var spTable = this.spatialTables[this.args.table + "_" + this.args.geomcolumn];
+      var srid = null;
+      if(spTable) {
+    	   srid = spTable.srid;
+      }
 
       //coming back from getGeometryFieldNames
       if (geom_fields_array.length > 0) {

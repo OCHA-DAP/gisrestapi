@@ -183,7 +183,7 @@ common.executePgQuery = function (query, callback) {
 
 
 //Find all PostGres tables with a geometry column.  Return the table names, geom column name(s) and SRID
-common.findSpatialTables = function (app, callback) {
+common.findSpatialTables = function (app, callback, tableName, geomColName) {
     var spatialTables = {};
 
     //Todo: separate views and tables with a property name, since mapnik can't render views (since no stats with analyze)
@@ -193,6 +193,19 @@ common.findSpatialTables = function (app, callback) {
         text: "select * from geometry_columns where f_table_catalog = $1",
         values: [settings.pg.database]
     };
+    
+    if ( tableName ) {
+    	var spatialTablesKey = tableName + "_" + geomColName;
+    	var existingTables = app.get('spatialTables');
+    	if ( existingTables && spatialTablesKey in existingTables ) {
+    		console.log("!!! Layer root already exists for " + tableName);
+    		return;
+    	}
+    	query = {
+    		text: "select * from geometry_columns where f_table_catalog = $1 and f_table_name = $2 ",
+    	    values: [settings.pg.database, tableName]
+    	}
+    }
 
     //TODO - add options to specify schema and database.  Right now it will read all
     this.executePgQuery(query, function (err, result) {
@@ -216,7 +229,14 @@ common.findSpatialTables = function (app, callback) {
         }
 
         //Set spatialTables in express app
-        app.set('spatialTables', spatialTables);
+        if ( existingTables ) {
+        	for (var key in spatialTables) {
+        		existingTables[key] = spatialTables[key];
+        	}
+        }
+        else {
+        	app.set('spatialTables', spatialTables);
+        }
 
         //return to sender
         callback(err, spatialTables);
