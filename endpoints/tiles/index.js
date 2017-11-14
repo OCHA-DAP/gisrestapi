@@ -274,7 +274,7 @@ exports.app = function (passport) {
         'srid': item.srid,
         'geometry_type': item.type
       };
-      tileSettings.routeProperties.name = key;
+      tileSettings.routeProperties.name = "PROJ_LIB";
       tileSettings.routeProperties.table = item.table;
       tileSettings.routeProperties.srid = item.srid;
       tileSettings.routeProperties.cartoFile = "";
@@ -283,7 +283,6 @@ exports.app = function (passport) {
       tileSettings.routeProperties.defaultStyle = "";//The name of the style inside of the xml file
 
       
-      debugger;
       createMultiTileRoute(app, tileSettings, PGTileStats.MultiTiles);
       createSingleTileRoute(app, tileSettings, PGTileStats.SingleTiles);
       createVectorTileRoute(app, tileSettings, PGTileStats.VectorTiles);
@@ -1287,7 +1286,7 @@ var createMultiTileRoute = exports.createMultiTileRoute = flow.define(
 
 
     });
-    debugger;
+    // debugger;
     console.log("Created multi tile service (" + _self.settings.routeProperties.source + "): " + route);
     tileRoutes.push({ name: _self.settings.routeProperties.name, route: route, type: "Multi Tile", source: _self.settings.routeProperties.source});
   }
@@ -1476,7 +1475,7 @@ var createVectorTileRoute = exports.createVectorTileRoute = flow.define(
         }
       }
 
-      debugger;
+      // debugger;
       //Make the mapnik datasource.  We wait until now in case the table definition changes if a where clause is passed in above.
       _self.mapnikDatasource = (_self.settings.mapnik_datasource.describe ? _self.settings.mapnik_datasource : new mapnik.Datasource(_self.settings.mapnik_datasource));
 
@@ -1529,8 +1528,8 @@ var createVectorTileRoute = exports.createVectorTileRoute = flow.define(
         // use tolerance of 32 for zoom levels below max
         opts.tolerance = req.param('z') < _self._maxzoom ? 32 : 0;
         // make larger than zero to enable
-        opts.simplify = 1;
-        opts.simplify_distance = 500.0;
+        opts.simplify = 0;
+        opts.simplify_distance = 20.0;
         console.log("!!! SIMPLIFYING ");
         // 'radial-distance', 'visvalingam-whyatt', 'zhao-saalfeld' (default)
         opts.simplify_algorithm = 'zhao-saalfeld';
@@ -1554,7 +1553,7 @@ var createVectorTileRoute = exports.createVectorTileRoute = flow.define(
           }
 
           // Fake empty RGBA to the rest of the tilelive API for now.
-          image.isSolid(function (err, solid, key) {
+          // image.isSolid(function (err, solid, key) {
             if (err) {
               res.writeHead(500, {
                 'Content-Type': 'text/plain'
@@ -1574,7 +1573,7 @@ var createVectorTileRoute = exports.createVectorTileRoute = flow.define(
                 return;
               }
 
-              if (solid === false) {
+              if (true) {
                 var duration = Date.now() - startTime;
                 _self.performanceObject.times.push(duration);
 
@@ -1583,7 +1582,7 @@ var createVectorTileRoute = exports.createVectorTileRoute = flow.define(
               }
 
               // Empty tiles are equivalent to no tile.
-              if (_self._blank || !key) {
+              if (_self._blank) {
                 res.removeHeader('Content-Encoding');
                 res.writeHead(404, {
                   'Content-Type': 'application/octet-stream'
@@ -1608,7 +1607,7 @@ var createVectorTileRoute = exports.createVectorTileRoute = flow.define(
             }else{
               done(null, image.getData());
             }
-          });
+          // });
         });
 
       } catch (err) {

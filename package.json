@@ -23,11 +23,11 @@
     "geojson-validation": "0.1.5",
     "jade": "0.35.0",
     "jquery": "2.1.1",
-    "jsdom": "0.10.5",
+    "jsdom": "9.12.0",
     "less-middleware": "0.1.14",
     "lru-cache": "2.5.0",
-    "millstone": "0.6.12",
-    "pg": "3.4.0",
+    "millstone": "0.6.17",
+    "pg": "6.4.2",
     "request": "2.37.0",
     "semver": "2.3.0",
     "shortid": "2.0.1",
@@ -35,11 +35,11 @@
     "ya-csv": "0.9.4"
   },
   "optionalDependencies": {
-    "mapnik": "1.4.15",
+    "mapnik": "3.6.2",
     "carto": "0.11.0",
     "ogr2ogr": "0.3.1",
-    "mbtiles": "0.5.0",
-    "tilelive": "4.5.3"
+    "mbtiles": "0.9.0",
+    "tilelive": "5.9.1"
   },
   "devDependencies": {
     "mocha": "1.20.1",

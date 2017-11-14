@@ -7,7 +7,7 @@ var _ = require('underscore'),
     StyleTrans = require('./style_trans'),
     semver = require('semver'),
     jsdom = require('jsdom'),
-    $ = require("jquery")(jsdom.jsdom().createWindow());
+    $ = require("jquery")(jsdom.jsdom().defaultView);
 ;
 
 // MML builder interface
