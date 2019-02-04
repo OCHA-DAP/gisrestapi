@@ -86,6 +86,9 @@ var utilities = require('./endpoints/utilities');
 app.use(utilities.app(passport));
 services.push({ name: "Utilities", link: "/services/utilities" })
 
+var hdx = require('./endpoints/hdx');
+app.use(hdx.app(passport));
+services.push({ name: "Hdx", link: "/services/hdx" });
 
 var tiles;
 try {

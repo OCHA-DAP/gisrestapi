@@ -35,6 +35,14 @@ exports.app = function (passport) {
   app.set('views', __dirname + '/views');
   app.set('view engine', 'jade');
 
+  exports.getExistingSpatialTables = function() {
+    return app.get('spatialTables');
+  };
+
+  exports.setExistingSpatialTables = function(spatialTables) {
+    return app.set('spatialTables', spatialTables);
+  };
+
   //Add a route and define response
   //Get list of public base tables from postgres
   app.all('/services/tables', [passport.authenticationFunctions], function (req, res) {
@@ -162,7 +170,7 @@ exports.app = function (passport) {
         };
 
         console.log("!!! Running query for columns");
-        
+
         common.executePgQuery(query, function (err, result) {
           //check for error
           if (err) {
@@ -291,21 +299,21 @@ exports.app = function (passport) {
             this.spatialTables[this.args.table].srid = result.rows[0].srid;
           } else {
             //Add the table name and the SRID
-        	  debugger;
-        	  console.log("!!! Table DOESN'T exist. Adding SRID in cache for table " + this.args.table + "-" + this.geometryColName);  
+        	  // debugger;
+        	  console.log("!!! Table DOESN'T exist. Adding SRID in cache for table " + this.args.table + "-" + this.geometryColName);
             this.spatialTables[this.args.table] = {};
             this.spatialTables[this.args.table].srid = result.rows[0].srid;
-            
+
             var spatialTablesKey = this.args.table + "_" + this.geometryColName;
             var findSpatialCallback = function (err, spatialTables) {
-            	debugger;
+            	// debugger;
             	if ( spatialTables && spatialTables.hasOwnProperty(spatialTablesKey)) {
             			tiles.createTileRoutesForItem(spatialTables[spatialTablesKey]);
             	}
             };
-            
+
             common.findSpatialTables(app, findSpatialCallback, this.args.table, this.geometryColName);
-            
+
 //            tiles.createTileRoutesForItem({
 //            	'table': this.args.table,
 //            	'srid': result.rows[0].srid,

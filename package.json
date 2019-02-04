@@ -17,7 +17,7 @@
   "dependencies": {
     "cors": "2.4.1",
     "crypto": "0.0.3",
-    "express": "3.3.4",
+    "express": "3.11.0",
     "flow": "0.2.3",
     "generic-pool": "2.0.4",
     "geojson-validation": "0.1.5",
@@ -28,7 +28,7 @@
     "lru-cache": "2.5.0",
     "millstone": "0.6.17",
     "pg": "6.4.2",
-    "request": "2.37.0",
+    "request": "2.68.0",
     "semver": "4.3.2",
     "shortid": "2.0.1",
     "underscore": "1.6.0",
