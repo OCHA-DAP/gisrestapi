@@ -41,7 +41,6 @@ module.exports = function(passport, config) {
 	passport.use(new BearerStrategy({
 
 	}, function(token, done) {
-		debugger;
 		// asynchronous validation, for effect...
 		process.nextTick(function() {
 
@@ -50,7 +49,6 @@ module.exports = function(passport, config) {
 			// authenticated `user`.  Note that in a production-ready application, one
 			// would want to validate the token for authenticity.
 			findByToken(token, function(err, user) {
-				debugger;
 				if (err) {
 					return done(err);
 				}
@@ -64,7 +62,6 @@ module.exports = function(passport, config) {
 
 	function findByToken(token, fn) {
 		for (var i = 0, len = users.length; i < len; i++) {
-			debugger;
 			var user = users[i];
 			if (user.token === token) {
 				return fn(null, user);
@@ -72,7 +69,7 @@ module.exports = function(passport, config) {
 		}
 		return fn(null, null);
 	}
-	
+
 	//For development
 	var users = [
     	{ id: 1, username: 'bob', token: '123456789', email: 'bob@example.com' },
