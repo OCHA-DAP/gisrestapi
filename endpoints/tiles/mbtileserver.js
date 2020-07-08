@@ -1,5 +1,6 @@
 //Express, Common and settings should be used by all sub-modules
 var express = require('express'),
+  logger = require('../../logging/logging').child({'module': __filename}),
   common = require("../../common"),
   settings = require('../../settings/settings');
 
@@ -334,7 +335,7 @@ function loadPNGMBTilesRoutes(app){
       tilelive.load(mbtilespath, function (err, source) {
 
         if (err) {
-          console.log("Error creating service for " + file + " " + err);
+          logger.error("Error creating service for " + file + " " + err);
           return;
         }
 
@@ -343,7 +344,7 @@ function loadPNGMBTilesRoutes(app){
           PNGmbTileFiles.push(info);
         });
 
-        console.log("Tilelive Loaded " + file);
+        logger.info("Tilelive Loaded " + file);
         var name = file.split('.')[0];
         PNGroute = '/services/tiles/' + name + '/:z/:x/:y.png';
 
@@ -361,7 +362,7 @@ function loadPNGMBTilesRoutes(app){
           });
         });
 
-        console.log("Created PNG .mbtiles service: " + PNGroute);
+        logger.info("Created PNG .mbtiles service: " + PNGroute);
         _imageTileRoutes.push({ name: name, route: PNGroute, type: ".png .mbtiles" });
       });
 
@@ -402,7 +403,7 @@ function loadPBFMBTilesRoutes(app) {
 
     tilelive.load(mbtilespath, function (err, source) {
       if (err) {
-        console.log("Error creating service for " + file + " " + err);
+        logger.error("Error creating service for " + file + " " + err);
         return;
       }
 
@@ -445,7 +446,7 @@ function loadPBFMBTilesRoutes(app) {
         });
       });
 
-      console.log("Created PBF .mbtiles service: " + PBFroute);
+      logger.info("Created PBF .mbtiles service: " + PBFroute);
       _vectorTileRoutes.push({ name: name, route: PBFroute, type: ".pbf .mbtiles" });
     });
   });
@@ -500,7 +501,7 @@ function loadPBFMBTilesRoute(app) {
       });
     });
 
-    console.log("Created PBF .mbtiles service: " + PBFroute);
+    logger.info("Created PBF .mbtiles service: " + PBFroute);
     _vectorTileRoutes.push({ name: name, route: PBFroute, type: ".pbf .mbtiles" });
   });
 
@@ -545,7 +546,7 @@ function loadTM2ZSources(){
           }
         });
       });
-      console.log("Created PNG .mbtiles service: " + PNGroute);
+      logger.info("Created PNG .mbtiles service: " + PNGroute);
     });
   });
 

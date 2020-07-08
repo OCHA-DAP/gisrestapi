@@ -1,5 +1,5 @@
 ﻿//////////Tables////////////
-
+const logger = require('../../logging/logging').child({'module': __filename});
 //Express, Common and settings should be used by all sub-modules
 var express = require('express'), common = require("../../common"), settings = require('../../settings/settings'),
     referrerCheck = require('../../utils/referrer-header-check');
@@ -20,7 +20,7 @@ try {
   ogr2ogr = require('ogr2ogr');
 } catch (e) {
   ogr2ogr = null;
-  console.log("No ogr2ogr found. Will not use.");
+  logger.warn("No ogr2ogr found. Will not use.");
 }
 
 //Add shapefile option to table query output list
@@ -169,7 +169,7 @@ exports.app = function (passport) {
           values: [this.args.table]
         };
 
-        console.log("!!! Running query for columns");
+        logger.debug("!!! Running query for columns");
 
         common.executePgQuery(query, function (err, result) {
           //check for error
@@ -248,7 +248,7 @@ exports.app = function (passport) {
       if (rasterOrGeometry.present === true) {
     	this.geometryColName = rasterOrGeometry.name.substring(1,rasterOrGeometry.name.length-1);
         if (this.spatialTables[this.args.table] && this.spatialTables[this.args.table].srid) {
-        	console.log("!!! SRID in cache for table " + this.args.table);
+        	logger.info("!!! SRID in cache for table " + this.args.table);
           this({
             rows: [
               {
@@ -257,7 +257,7 @@ exports.app = function (passport) {
             ]
           });
         } else {
-        	console.log("!!! fetching SRID for table " + this.args.table);
+        	logger.info("!!! fetching SRID for table " + this.args.table);
           //check SRID
           var query = {
             text: 'select ST_SRID(' + rasterOrGeometry.name + ') as SRID FROM "' + this.args.table + '" LIMIT 1;',
@@ -282,7 +282,7 @@ exports.app = function (passport) {
         //Report error and exit.
         this.args.errorMessage = err.text;
       } else if (result && result.rows && result.rows.length > 0) {
-    	  console.log("!!! Successfully fetched for table " + this.args.table);
+    	  logger.info("!!! Successfully fetched for table " + this.args.table);
         //Get SRID
         if (result.rows[0].srid == 0 || result.rows[0].srid == "0") {
           this.args.infoMessage = "Warning:  this table's SRID is 0.  Projections and other operations will not function propertly until you <a href='http://postgis.net/docs/UpdateGeometrySRID.html' target='_blank'>set the SRID</a>.";
@@ -292,15 +292,15 @@ exports.app = function (passport) {
         }
         else {
           this.args.SRID = result.rows[0].srid;
-          console.log("!!! SRID for table " + this.args.table + " is " + this.args.SRID);
+          logger.info("!!! SRID for table " + this.args.table + " is " + this.args.SRID);
           //Use the SRID
           if (this.spatialTables[this.args.table]) {
-        	console.log("!!! Table exists. Adding SRID in cache for table " + this.args.table);
+        	logger.info("!!! Table exists. Adding SRID in cache for table " + this.args.table);
             this.spatialTables[this.args.table].srid = result.rows[0].srid;
           } else {
             //Add the table name and the SRID
         	  // debugger;
-        	  console.log("!!! Table DOESN'T exist. Adding SRID in cache for table " + this.args.table + "-" + this.geometryColName);
+        	  logger.info("!!! Table DOESN'T exist. Adding SRID in cache for table " + this.args.table + "-" + this.geometryColName);
             this.spatialTables[this.args.table] = {};
             this.spatialTables[this.args.table].srid = result.rows[0].srid;
 
@@ -785,9 +785,9 @@ exports.app = function (passport) {
         if (file) {
           fs.unlink(file, function (err) {
             if (err) {
-              console.log("Problem deleting shapefile " + file + " :" + err);
+              logger.error("Problem deleting shapefile " + file + " :" + err);
             } else {
-              console.log('Deleted shapefile ' + file);
+              logger.info('Deleted shapefile ' + file);
             }
           });
         }
@@ -1250,7 +1250,7 @@ exports.app = function (passport) {
     getGeometryFieldNames(table, this);
   }, function (err, geom_fields_array) {
     //Array of geometry columns
-    console.log(" in geom fields. " + geom_fields_array.length);
+    logger.info(" in geom fields. " + geom_fields_array.length);
     if (geom_fields_array.length == 0) {
       this.callback([], []);
     } else {
@@ -1359,14 +1359,14 @@ exports.app = function (passport) {
 
       //the whole response has been recieved, so we just print it out here
       response.on('end', function () {
-        console.log("ended API response");
+        logger.debug("ended API response");
         //Write out a GeoJSON file to disk - remove all whitespace
         var geoJsonOutFile = filename + '.json';
         fs.writeFile("." + settings.application.geoJsonOutputFolder + table + "/" + geoJsonOutFile, str.join("").replace(/\s+/g, ''), function (err) {
           if (err) {
-            console.log(err.message);
+            logger.error(err.message);
           } else {
-            console.log("created GeoJSON file.");
+            logger.debug("created GeoJSON file.");
           }
 
           //pass back err, even if null

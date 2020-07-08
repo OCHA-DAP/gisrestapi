@@ -1,6 +1,8 @@
 ﻿//Common and settings should be used by all sub-modules
 var express = require('express'), common = require("../../common"), settings = require('../../settings/settings');
 
+const logger = require('../../logging/logging').child({'module': __filename})
+
 //Module-specific requires:
 var mapnik = require('mapnik'),
   mercator = require('../../utils/sphericalmercator.js'), // 3857
@@ -162,13 +164,13 @@ exports.app = function (passport) {
 
   // listen for events to track cache rate and errors
   cacher.on("hit", function (key) {
-    console.log("Using Cached response for: " + key)
+    logger.info("Using Cached response for: " + key)
   });
   cacher.on("miss", function (key) {
-    console.log("No cached response for: " + key + ".  Generating.")
+    logger.info("No cached response for: " + key + ".  Generating.")
   });
   cacher.on("error", function (key) {
-    console.log("Error with cache. " + err)
+    logger.info("Error with cache. " + err)
   });
 
   var shpName = "";
@@ -290,7 +292,7 @@ exports.app = function (passport) {
 
   common.findSpatialTables(app, function (error, tables) {
     if (error) {
-      console.log(error);
+      logger.info(error);
     } else {
       if (tables) {
         Object.keys(tables).forEach(function (key) {
@@ -538,7 +540,7 @@ exports.createGeoJSONQueryRenderer = flow.define(function (app, geoJSON, epsgSRI
                 throw err;
               map.add_layer(layer);
 
-              console.log(map.toXML());
+              logger.info(map.toXML());
               // Debug settings
 
               map.extent = bbox;
@@ -574,7 +576,7 @@ exports.createGeoJSONQueryRenderer = flow.define(function (app, geoJSON, epsgSRI
     }
   });
 
-  console.log("Created dynamic query service: " + dynamicURL);
+  logger.info("Created dynamic query service: " + dynamicURL);
   callback({
     imageURL: dynamicURL
   });
@@ -633,7 +635,7 @@ exports.createImageFromGeoJSON = flow.define(function (geoJSON, bbox, epsgSRID, 
           strict: true
         }, function (err, map) {
 
-          console.log(map.toXML());
+          logger.info(map.toXML());
           // Debug settings
 
           if (err)
@@ -725,7 +727,7 @@ var createMemoryShapefileTileRenderer = exports.createMemoryShapefileTileRendere
 
               map.add_layer(layer);
 
-              console.log(map.toXML());
+              logger.info(map.toXML());
               // Debug settings
 
               map.extent = bbox;
@@ -755,7 +757,7 @@ var createMemoryShapefileTileRenderer = exports.createMemoryShapefileTileRendere
       });
     });
 
-    console.log("Created in-memory shapefile service: " + '/services/memshapefiles/' + _self.table + '/dynamicMap');
+    logger.info("Created in-memory shapefile service: " + '/services/memshapefiles/' + _self.table + '/dynamicMap');
   });
 
 
@@ -871,7 +873,7 @@ var createMemoryShapefileSingleTileRenderer = exports.createMemoryShapefileSingl
 
           map.add_layer(layer);
 
-          console.log(map.toXML());
+          logger.info(map.toXML());
           // Debug settings
 
           map.extent = bbox;
@@ -908,7 +910,7 @@ var createMemoryShapefileSingleTileRenderer = exports.createMemoryShapefileSingl
     }
   });
 
-  console.log("Created in-memory shapefile query service: " + '/services/memshapefiles/' + _self.table + '/dynamicQueryMap');
+  logger.info("Created in-memory shapefile query service: " + '/services/memshapefiles/' + _self.table + '/dynamicQueryMap');
 });
 
 function createInMemoryDatasource(name, path_to_shp) {
@@ -1026,7 +1028,7 @@ var createRasterTileRenderer = exports.createRasterTileRenderer = flow.define(fu
 
             map.add_layer(layer);
 
-            console.log(map.toXML());
+            logger.info(map.toXML());
             // Debug settings
 
             map.extent = bbox;
@@ -1056,7 +1058,7 @@ var createRasterTileRenderer = exports.createRasterTileRenderer = flow.define(fu
     });
   });
 
-  console.log("Created dynamic raster tile service: " + '/services/rasters/' + _self.table + '/dynamicMap');
+  logger.info("Created dynamic raster tile service: " + '/services/rasters/' + _self.table + '/dynamicMap');
 });
 
 
@@ -1258,7 +1260,7 @@ var createMultiTileRoute = exports.createMultiTileRoute = flow.define(
 
           map.extent = bbox;
           //Write out the map xml
-          console.log(map.toXML());
+          logger.info(map.toXML());
 
 
           var im = new mapnik.Image(map.width, map.height);
@@ -1287,7 +1289,7 @@ var createMultiTileRoute = exports.createMultiTileRoute = flow.define(
 
     });
     // debugger;
-    console.log("Created multi tile service (" + _self.settings.routeProperties.source + "): " + route);
+    logger.info("Created multi tile service (" + _self.settings.routeProperties.source + "): " + route);
     tileRoutes.push({ name: _self.settings.routeProperties.name, route: route, type: "Multi Tile", source: _self.settings.routeProperties.source});
   }
 );
@@ -1399,7 +1401,7 @@ var createSingleTileRoute = exports.createSingleTileRoute = flow.define(
             map.add_layer(layer);
 
             //Write out the map xml
-            console.log(map.toXML());
+            logger.info(map.toXML());
 
             map.extent = bbox;
             var im = new mapnik.Image(map.width, map.height);
@@ -1435,7 +1437,7 @@ var createSingleTileRoute = exports.createSingleTileRoute = flow.define(
       }
     });
 
-    console.log("Created single tile service (" + _self.settings.routeProperties.source + "): " + route);
+    logger.info("Created single tile service (" + _self.settings.routeProperties.source + "): " + route);
     tileRoutes.push({ name: _self.settings.routeProperties.name, route: route, type: "Single Tile", source: _self.settings.routeProperties.source});
   });
 
@@ -1451,7 +1453,7 @@ var createVectorTileRoute = exports.createVectorTileRoute = flow.define(
   },
   function () {
 
-	console.log("!!! In createVectorTileRoute ");  
+	logger.debug("!!! In createVectorTileRoute ");  
     var _self = this;
 
     var route = '/services/' + _self.settings.routeProperties.source + '/' + _self.settings.routeProperties.table + (_self.settings.mapnik_datasource.type.toLowerCase() == 'postgis' ? '/' + _self.settings.mapnik_datasource.geometry_field : '') + '/vector-tiles/:z/:x/:y.*';
@@ -1470,7 +1472,7 @@ var createVectorTileRoute = exports.createVectorTileRoute = flow.define(
 
         //If a where clause was passed in, and we're using a postgis datasource, allow it
         if (_self.settings.mapnik_datasource.type.toLowerCase() == 'postgis') {
-        	console.log("!!! PG simplify 2 " );
+        	logger.debug("!!! PG simplify 2 " );
           _self.settings.mapnik_datasource.table = (args.fields ? '(SELECT ' + _self.settings.routeProperties.geom_field + (args.fields ? ',' + args.fields : '') + ' from "' + _self.settings.routeProperties.table + '"' + (args.where ? ' WHERE ' + args.where : '') + ') as "' + _self.settings.routeProperties.table + '"' : '"' + _self.settings.routeProperties.table + '"');
         }
       }
@@ -1487,12 +1489,12 @@ var createVectorTileRoute = exports.createVectorTileRoute = flow.define(
         var layer = new mapnik.Layer(_self.settings.routeProperties.name, ((_self.epsg && (_self.epsg == 3857 || _self.epsg == 3587)) ? mercator.proj4 : geographic.proj4));
 
         var label_point_layer;
-        console.log("!!! BEFORE SELECT " );
+        logger.debug("!!! BEFORE SELECT " );
         if(args.labelpoints && _self.settings.mapnik_datasource.type.toLowerCase() == 'postgis') {
           //If user specifies label points to be created, then create another layer in this vector tile that stores the centroid to use as a label point.
 
           //The only difference in the datasource is the table parameter, which is either a table name, or a sub query that allows you specify a WHERE clause.
-        	console.log("!!! PG simplify " );
+        	logger.debug("!!! PG simplify " );
           _self.settings.mapnik_datasource.table = (args.fields ? '(SELECT ' + ('ST_PointOnSurface(ST_SimplifyPreserveTopology(' + _self.settings.routeProperties.geom_field + '), 5) as geom' ) + (args.fields ? ',' + args.fields : '')  + ' from "' + _self.settings.routeProperties.table + '"' + (args.where ? ' WHERE ' + args.where : '') + ') as "' + _self.settings.routeProperties.table + "_label" + '"' : '"' + _self.settings.routeProperties.table + '"');
 
           //Make a new Mapnik datasource object
@@ -1516,7 +1518,7 @@ var createVectorTileRoute = exports.createVectorTileRoute = flow.define(
 
         map.add_layer(layer);
 
-        console.log(map.toXML());
+        logger.info(map.toXML());
 
         //From Tilelive-Bridge - getTile
         // set source _maxzoom cache to prevent repeat calls to map.parameters
@@ -1530,7 +1532,7 @@ var createVectorTileRoute = exports.createVectorTileRoute = flow.define(
         // make larger than zero to enable
         opts.simplify = 0;
         opts.simplify_distance = 20.0;
-        console.log("!!! SIMPLIFYING ");
+        logger.debug("!!! SIMPLIFYING ");
         // 'radial-distance', 'visvalingam-whyatt', 'zhao-saalfeld' (default)
         opts.simplify_algorithm = 'zhao-saalfeld';
 
@@ -1619,6 +1621,6 @@ var createVectorTileRoute = exports.createVectorTileRoute = flow.define(
       }
     });
 
-    console.log("Created vector tile service: " + route);
+    logger.info("Created vector tile service: " + route);
     VectorTileRoutes.push({ name: _self.settings.routeProperties.name, route: route, type: "Multi Tile", source: _self.settings.routeProperties.source});
   });
