@@ -31,6 +31,7 @@ RUN echo -en "LANGUAGE=en_US.UTF-8\nLC_ALL=en_US.UTF-8\nLC_PAPER=en_US.UTF-8\nLC
         msmtp \
         nano \
         nodejs \
+        moreutils \
         postgresql-client \
         python-mapnik \
         python-software-properties \

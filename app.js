@@ -7,9 +7,13 @@ var settings
 try {
   settings = require('./settings/settings.js');
 } catch (e) {
-  console.log("No settings.js file detected in settings folder.  Try copying the settings/settings.js.example to settings/settings.js and add in settings.");
+  logger.error("No settings.js file detected in settings folder.  Try copying the settings/settings.js.example to settings/settings.js and add in settings.");
   return;
 }
+
+const expressWinston = require('express-winston');
+const defaultLogger = require('./logging/logging');
+const logger = defaultLogger.child({'module': __filename})
 
 var pg = require('pg'),
   express = require('express'),
@@ -22,6 +26,10 @@ var pg = require('pg'),
   _ = require("underscore"),
   https = require('https');
   app = express();
+
+app.use(expressWinston.logger({
+  'winstonInstance': defaultLogger.child({'module': 'EXPRESS'})
+}));
 
 //PostGres Connection String
 global.conString = "postgres://" + settings.pg.username + ":" + settings.pg.password + "@" + settings.pg.server + ":" + settings.pg.port + "/" + settings.pg.database;
@@ -39,7 +47,7 @@ app.set('view engine', 'jade');
 app.set('trust proxy', true);
 app.enable("jsonp callback"); //TODO: Remove this if not needed because of CORS
 app.use(express.favicon(path.join(__dirname, 'public/img/favicon.png')));
-app.use(express.logger('dev'));
+// app.use(express.logger('dev'));
 app.use(express.bodyParser());
 app.use(express.methodOverride());
 app.use(express.cookieParser('eobfgl-shoe'));
@@ -97,7 +105,7 @@ try {
   services.push({ name: "Static Image Tile Services", link: "/services/image-tiles" });
 } catch (e) {
   tiles = null;
-  console.log("Mapnik module has an error. Skipping this module. Reason: " + e);
+  logger.error("Mapnik module has an error. Skipping this module. Reason: " + e);
 }
 
 if (tiles) {
@@ -111,7 +119,7 @@ try {
 
 } catch (e) {
   datablaster = null;
-  console.log("Datablaster not properly installed. Skipping. Reason: No blast_config.js file found in endpoints/datablaster");
+  logger.error("Datablaster not properly installed. Skipping. Reason: No blast_config.js file found in endpoints/datablaster");
 }
 
 if (datablaster)
@@ -157,7 +165,7 @@ if(settings.ssl && settings.ssl.pfx && settings.ssl.password){
 
     startMessage += ' on port ' + app.get('port');
 
-    console.log(startMessage);
+    logger.info(startMessage);
   });
 
 }else{
@@ -171,7 +179,7 @@ if(settings.ssl && settings.ssl.pfx && settings.ssl.password){
     }
 
     startMessage += ' on port ' + app.get('port');
-    console.log(startMessage);
+    logger.info(startMessage);
   });
 }
 

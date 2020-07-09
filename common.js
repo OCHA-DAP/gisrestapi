@@ -1,5 +1,6 @@
 //common.js is a collection of commonly used functions by the main app.js and all submodules.
 var pg = require('pg'),
+    logger = require('./logging/logging').child({'module': __filename}),
     querystring = require('querystring'),
     http = require("http"),
     settings = require("./settings/settings"),
@@ -198,7 +199,7 @@ common.findSpatialTables = function (app, callback, tableName, geomColName) {
     	var spatialTablesKey = tableName + "_" + geomColName;
     	var existingTables = app.get('spatialTables');
     	if ( existingTables && spatialTablesKey in existingTables ) {
-    		console.log("!!! Layer root already exists for " + tableName);
+    		logger.warn("!!! Layer root already exists for " + tableName);
     		return;
     	}
     	query = {
@@ -211,7 +212,7 @@ common.findSpatialTables = function (app, callback, tableName, geomColName) {
     this.executePgQuery(query, function (err, result) {
         if (err) {
             //Report error and exit.
-            console.log("Error in reading spatial tables from DB.  Can't load dynamic tile endopints. Message is: " + err.text);
+            logger.error("Error in reading spatial tables from DB.  Can't load dynamic tile endopints. Message is: " + err.text);
         } else {
 
             //Add to list of tables.
@@ -246,13 +247,13 @@ common.findSpatialTables = function (app, callback, tableName, geomColName) {
 //Utilities
 common.log = function (message) {
     //Write to console
-    console.log(message);
+    logger.info(message);
 }
 
 common.vacuumAnalyzeAll = function () {
     var query = { text: "VACUUM ANALYZE;", values: [] };
     this.executePgQuery(query, function (err, result) {
-        console.log("Performed VACUUM ANALYZE on ALL;")
+        logger.info("Performed VACUUM ANALYZE on ALL;")
     });
 }
 
@@ -549,7 +550,7 @@ common.formatters.CSVFormatter = function (rows, geom_fields_array) {
 common.executeSelfRESTRequest = function (table, path, postargs, callback, settings) {
     //Grab JSON from our own rest service for a table.
     var post_data = querystring.stringify(postargs);
-    console.log("Post Data: " + post_data);
+    logger.info("Post Data: " + post_data);
 
     var options = {
         host: settings.application.host,
@@ -566,7 +567,7 @@ common.executeSelfRESTRequest = function (table, path, postargs, callback, setti
         var str = [];
 
         res.on('error', function (err) {
-            console.log("problem");
+            logger.warn("problem");
             callback(err, null);
             return;
         });
@@ -578,7 +579,7 @@ common.executeSelfRESTRequest = function (table, path, postargs, callback, setti
 
         //the whole response has been recieved, so we just print it out here
         res.on('end', function () {
-            console.log("ended API response");
+            logger.info("ended API response");
             callback(null, JSON.parse(str));
         });
     });
@@ -597,10 +598,10 @@ common.writeGeoJSONFile = function (geojson, name, callback) {
     var fullPath = "." + settings.application.geoJsonOutputFolder + geoJsonOutFile;
     fs.writeFile(fullPath, JSON.stringify(geojson).replace(/\s+/g, ''), function (err) {
         if (err) {
-            console.log(err.message);
+            logger.error(err.message);
         }
         else {
-            console.log("created GeoJSON file.");
+            logger.info("created GeoJSON file.");
         }
 
         //pass back err, even if null

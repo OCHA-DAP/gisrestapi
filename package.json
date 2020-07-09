@@ -32,7 +32,9 @@
     "semver": "4.3.2",
     "shortid": "2.0.1",
     "underscore": "1.6.0",
-    "ya-csv": "0.9.4"
+    "ya-csv": "0.9.4",
+    "winston": "3.3.3",
+    "express-winston": "4.0.3"
   },
   "optionalDependencies": {
     "mapnik": "3.6.2",
