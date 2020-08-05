@@ -58,9 +58,11 @@ RUN echo -en "LANGUAGE=en_US.UTF-8\nLC_ALL=en_US.UTF-8\nLC_PAPER=en_US.UTF-8\nLC
         gcc && \
     apt-get -y autoremove && \
     apt-get -y clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-RUN mkdir -p /etc/service/gisapi /srv && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
+    rm -rf /etc/service/syslog-* && \
+    rm -rf /etc/service/cron && \
+    rm -rf /etc/service/sshd && \
+    mkdir -p /etc/service/gisapi /srv && \
     mv docker/run_gisapi /etc/service/gisapi/run && \
     chmod +x /etc/service/gisapi/run
 
