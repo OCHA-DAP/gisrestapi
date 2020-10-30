@@ -1,6 +1,8 @@
 var mapnik = require('mapnik');
-
+var path = require('path');
 var proj4 = '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs';
+
+mapnik.register_datasource(path.join(mapnik.settings.paths.input_plugins,'postgis.input'));
 
 /**
  * Geographic constructor: precaches calculations
