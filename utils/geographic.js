@@ -1,5 +1,5 @@
 var mapnik = require('mapnik');
-
+mapnik.register_datasource(path.join(mapnik.settings.paths.input_plugins,'postgis.input'));
 var proj4 = '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs';
 
 /**
