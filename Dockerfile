@@ -1,4 +1,4 @@
-FROM unocha/debian-base:10-buster-202001-01
+FROM unocha/debian-base:10-buster-202102-01
 
 ENV DEBIAN_FRONTEND=noninteractive
 
